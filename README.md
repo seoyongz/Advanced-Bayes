@@ -1,4 +1,4 @@
-# In Advanced Bayes class, I learned...
+# Class : Advanced Bayes
 
 1. [Hierarchical Linear Models](https://www.notion.so/CH15-Hierarchical-Linear-Models-b34181ff98dd4ba085515bdcb1e80b4e)
 2. [Generalized Linear Models](https://www.notion.so/CH16-Generalized-Linear-Models-d6f828054d614701acc0ba9aafbedf17)
@@ -6,6 +6,6 @@
 4. [Gaussian Process Regression](https://www.notion.so/CH21-Gaussian-Process-Models-bd6f9e86ec9d4060960e138ff57fda0d)
 5. [Finite Mixture Model](https://www.notion.so/CH22-Finite-Mixture-Models-e54a9682d707492f80a005d8a3084510)
 
-# In Causal Inference Class, I learned...
+# Class : Causal Inference
 
 
