@@ -1,4 +1,4 @@
-# Advanced Bayes Class Review
+# Review of Advanced Bayes Class
 
 1. [Hierarchical Linear Models](https://www.notion.so/CH15-Hierarchical-Linear-Models-b34181ff98dd4ba085515bdcb1e80b4e)
 2. [Generalized Linear Models](https://www.notion.so/CH16-Generalized-Linear-Models-d6f828054d614701acc0ba9aafbedf17)
