@@ -8,20 +8,19 @@
 - $X_j \sim \mathbb{R}^{n_j \times d}$ : design matrix 
 - $\beta_j\in \mathbb{R}^d$ : subject-specific random effects
 - $j=1, \ldots, m$ : subject index
-$$
-y_j &\sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2I_{n_j})\\
-\beta_j&\sim \text{N}_d(\mu_\beta,\ \sigma_\beta)
-$$
+
+$$y_j &\sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2I_{n_j})\\
+\beta_j&\sim \text{N}_d(\mu_\beta,\ \sigma_\beta)$$
+
 where $\sigma^2>0$, $\mu_\beta \in \mathbb{R}^d$, and $\Sigma_\beta \in \mathbb{R}^{d\times d}$ (positive definite)
 
 ### Priors
-$$
-\mu_\beta &\sim \text{N}_d(\xi,\ \Omega),\\
+$$\mu_\beta &\sim \text{N}_d(\xi,\ \Omega),\\
 
 \sigma^2 &\sim \text{Inv-}\chi^2(\nu,\ \tau^2),\\
 
-\Sigma_\beta &\sim \text{Inv-Wishart}_\rho(\Psi^{-1})
-$$
+\Sigma_\beta &\sim \text{Inv-Wishart}_\rho(\Psi^{-1})$$
+
 
 - $p(\beta\ |\ \sigma^2,\ \mu_\beta,\ \Sigma_\beta,\ y)$
 
