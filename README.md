@@ -93,14 +93,17 @@ derive image
 
 ### Model 
 Univariate location-scale mixture of Gaussians
+<div align="center">
 $$y_i\, |\, z_i \sim \text{N}(\mu_{z_i},\ \tau_{z_i}^2)\\
 \text{P}(z_i=h) = \pi_h, \quad i=1, \ldots, n$$
+</div>
 
 ### Priors
+<div align="center">
 $$(\pi_1,\ldots, \pi_H)\sim \text{Dirichlet}(a,\ldots, a),\\
 \mu_h\,|\,\tau_h^2 \sim \text{N}(\mu_0,\ \kappa \tau_h^2),\\
 \tau_h^2 \sim \text{Inv-Gamma}(a_\tau,\ b_\tau),\quad h=1, \ldots, H$$
-
+</div>
 </details>
 
 
