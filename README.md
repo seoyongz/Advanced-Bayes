@@ -11,7 +11,7 @@
 
 <div align="center">
 
-$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2I_{n_j})$$
+$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2vI_{n_j})$$
 
 $$\beta_j \sim \text{N}_d(\mu_\beta,\ \sigma_\beta)$$
 </div>
@@ -40,7 +40,7 @@ $$\Sigma_\beta \sim \text{Inv-Wishart}_\rho(\Psi^{-1})$$
 
 <div align="center">
 
-$$y_{ij} = \frac{\beta_1 + u_i}{1+\exp\left\{-(\text{AGE}_{ij} - \beta_2)/\beta_3 \right\}},$$
+$$y_{ij} = \frac{\beta_1 + u_i}{1+\exp\{-(\text{AGE}_{ij} - \beta_2)/\beta_3 \}},$$
 
 $$u_i \sim \text{N}(0,\ \tau^2),$$
 
@@ -50,6 +50,7 @@ $$\epsilon_{ij} \sim \text{N}(0,\ \sigma^2)$$
 ### Priors
 
 <div align="center">
+
 $$p(\tau)\propto 1$$
 </div>
 
