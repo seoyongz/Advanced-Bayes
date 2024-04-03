@@ -1,0 +1,50 @@
+---
+title: "Untitled"
+author: "신서영"
+date: "2023-05-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+n = 500
+i = 1:n
+xi = (2*i - 1)/1000
+```
+
+## (a) Approximate the target function and compare the column space of design matrix
+```{r}
+k = 3
+L = 11
+H = L + k + 1
+xh = seq(min(xi), max(xi), length.out = L)  # knots
+```
+
+### Generate design matrix 
+```{r}
+## Using truncated power basis
+W1 = matrix(rep(0, n*H), ncol=H)
+for(j in 1:L){
+  W1[, j] = (xi - xh[j])^3
+}
+W1[W1<0] = 0
+for(j in (L+1):H){
+  W1[, j] = xi^(j-L-1)
+}
+
+## Using polynomial radial basis
+W2 = matrix(rep(NA, n*H), ncol=H)
+for(j in 1:L){
+  W2[, j] = (abs(xi - xh[j]))^3
+}
+for(j in (L+1):H){
+  W2[, j] = xi^(j-L-1)
+}
+
+## Using B-spline
+W3 = bs(xi, knots=xh, degree=3, intercept=T)
+```

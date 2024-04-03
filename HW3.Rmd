@@ -1,0 +1,595 @@
+---
+title: "hw3_신서영"
+author: "신서영"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Q1.
+
+### Load libraries
+```{r}
+library(ggplot2)
+library(rstan)
+library(latex2exp)
+library(bayestestR)
+library(viridis)
+library(car)
+library(MASS)
+library(splines)
+library(PenCoxFrail)
+library(LaplacesDemon)
+```
+
+### Load Data set
+```{r}
+data(Orange)
+head(Orange)
+summary(Orange)
+```
+
+## (a) Overlay line plots for the trees to see how they grow over time.
+```{r}
+ggplot(mapping=aes(x=age, y=circumference, group=Tree), data=Orange) + 
+  geom_line(color=Orange$Tree) 
+```
+
+## (b) Use Stan, find the posterior distribution of each parameter
+
+### To understand the given nonlinear function, draw the function with some beta paramters
+```{r}
+beta1 = c(100, 200, 300)
+beta3 = c(100, 200, -200)
+x = seq(0, 1599, length.out=400)
+
+# with beta2 = 500
+par(mfrow=c(3,3))
+for(k in 1:3){
+  for(i in 1:3){
+    y = beta1[i]/(1 + exp(-(x-500)/beta3[k]))
+    plot(x, y, type="l")
+    title(main = paste0("(beta1, beta2, beta3) = (", beta1[i],",",500,",", beta3[k],")"))
+  }
+}
+```
+
+### Fit the nonlinear least squares
+```{r}
+nlm = nls(circumference~ beta1/(1 + exp(-(age - beta2)/beta3)), start=list(beta1 = 100, beta2 = 500, beta3 = 200), data=Orange)
+summary(nlm)
+beta_hat = coef(nlm)
+```
+
+### Fitted model
+```{r}
+y = beta_hat[1]/(1 + exp(-(x-beta_hat[2])/beta_hat[3]))
+par(mfrow=c(1,1))
+plot(x, y, type="l", ylim=c(min(Orange$circumference), max(Orange$circumference)))
+points(x=Orange$age, y=Orange$circumference)
+title(main = "Fitted Logistic Growth Model")
+```
+
+### bootstrap distribution for each parameter to assign priors
+```{r}
+nboot = 1000
+beta1_boot = c()
+beta2_boot = c()
+beta3_boot = c()
+control = nls.control(maxiter = 1000)
+for(i in 1:nboot){
+  index.boot = sample(1:nrow(Orange), nrow(Orange) , replace=T)
+  sample.boot = Orange[index.boot, ]
+  beta.boot = coef(nls(circumference ~ beta1/(1 + exp(-(age - beta2)/beta3)), start=list(beta1 = 200, beta2 = 700, beta3 = 350), data=sample.boot))
+  beta1_boot[i] = beta.boot[1]
+  beta2_boot[i] = beta.boot[2]
+  beta3_boot[i] = beta.boot[3]
+}
+```
+
+### Histogram of bootstrap samples
+```{r}
+par(mfrow=c(1,3))
+hist(beta1_boot, breaks=30, main="bootstrap dist of beta1", freq=F)
+abline(v=beta_hat[1], col="red", lwd=1.5)
+abline(v=mean(beta1_boot), col="blue", lwd=1.5)
+
+hist(beta2_boot, breaks=30, main="bootstrap dist of beta2", freq=F)
+abline(v=beta_hat[2], col="red", lwd=1.5)
+abline(v=mean(beta2_boot), col="blue", lwd=1.5)
+
+hist(beta3_boot, breaks=30, main="bootstrap dist of beta3", freq=F)
+abline(v=beta_hat[3], col="red", lwd=1.5)
+abline(v=mean(beta3_boot), col="blue", lwd=1.5)
+legend("topright",legend=c("beta_hat","mean of bootstrap samp"),fill=c("red","blue"),border="white",box.lty=0,cex=1.2)
+```
+
+### Write stan model
+I'll give normal prior for beta and uniform prior for tau.
+```{r}
+# Stan model
+stanmodel = "
+data {
+  int<lower=1> L;
+  int<lower=0> N;
+  int<lower=1, upper=L> ll[N];
+  vector[N] x;
+  vector[N] y;
+}
+parameters {
+  real<lower=0> beta1;
+  real beta2;
+  real<lower=0> beta3;
+  vector u[L];
+  real<lower=0> tau;
+  real<lower=0> sigma2;
+}
+
+model {
+  // priors
+  sigma2 ~ inv_gamma(0.001, 0.001);
+  beta1 ~ normal(192, 1000);
+  beta2 ~ normal(728, 1000);
+  beta3 ~ normal(353, 1000);
+
+  // likelihood
+  for (l in 1:L){
+    u[l] ~ normal(0, tau);
+  }
+  for(n in 1:N){
+    y[n] ~ normal((beta1 + u[ll[n]]) / (1 + exp(-(x[n] - beta2)/beta3)), sqrt(sigma2));
+  }
+}
+
+generated quantities{
+  real Y_mean[N];
+  real Y_pred[N];
+  for(n in 1:N){
+    Y_mean[n] = (beta1 + u[ll[n]]) / (1 + exp(-(x[n] - beta2)/beta3));
+    Y_pred[n] = normal_rng(Y_mean[n], sqrt(sigma2));
+  }
+}
+"
+```
+
+### stan fit
+I run the fitting code in r because of the running speed.
+And I bring the fitted result.
+```{r}
+niter = 100000
+nwarm = 50000
+fit = stan(
+  model_code = stanmodel,
+  data = list(y=Orange$circumference, x=Orange$age, N=nrow(Orange), L=5, ll=as.numeric(Orange$Tree)),
+  chains = 4,
+  warmup = nwarm,
+  iter = niter,
+  cores=4,
+)
+
+param = extract(fit)
+print(fit)
+```
+
+### trace plot of beta
+```{r}
+traceplot(fit, pars=c("beta1", "beta2", "beta3"))
+```
+
+### trace plot of u
+```{r}
+traceplot(fit, pars=c("u[1]", "u[2]", "u[3]", "u[4]", "u[5]"))
+```
+### Fitting with posterior mean
+```{r}
+u_hat = c(mean(param$u[,1]), mean(param$u[,2]), mean(param$u[,3]), mean(param$u[,4]), mean(param$u[,5]))
+beta_hat1 = c(mean(param$beta1), mean(param$beta2), mean(param$beta3))
+y = matrix(rep(NA, 5*length(x)), ncol=5)
+
+my_col = viridis(n = 5) 
+par(mfrow=c(1,1))
+u_index = unique(as.integer(Orange$Tree))
+for(i in 1:5){
+  y[,i] = (beta_hat1[1] + u_hat[u_index[i]])/(1 + exp(-(x - beta_hat1[2])/beta_hat1[3]))
+  plot(x, y[,i], type="l", ylim=c(min(Orange$circumference), max(Orange$circumference)), col=my_col[i])
+  points(x=Orange[Orange$Tree==i,]$age, y=Orange[Orange$Tree==i,]$circumference, col=my_col[i])
+  par(new=T)
+}
+i=1
+```
+```{r}
+map1 = map_estimate(fit)
+```
+
+
+### residual plot
+```{r}
+y = matrix(rep(NA, nrow(Orange)*5), ncol=5)
+i=1
+y[,i] = (beta_hat1[1] + u_hat[u_index[i]])/(1 + exp(-(Orange$age - beta_hat1[2])/beta_hat1[3]))
+plot(Orange$age, y[,i]-Orange[Orange$Tree==i,]$circumference, col=my_col[i], ylim=c(-20, 20), main="Residual plot for homoscedasticity model", ylab="residual", xlab="age")
+for(i in 2:5){
+  y[,i] = (beta_hat1[1] + u_hat[u_index[i]])/(1 + exp(-(Orange$age - beta_hat1[2])/beta_hat1[3]))
+  points(Orange$age, y[,i]-Orange[Orange$Tree==i,]$circumference, col=my_col[i])
+}
+abline(h=0, col="red", lwd=1.5)
+```
+
+
+### Histogram of parameters u
+```{r}
+param = extract(fit)
+par(mfrow=c(2,3))
+for(k in 1:5){
+  hist(param$u[,k], breaks=30, main=paste0("Histogram of u[ ,",k,"]"), xlab=paste0("u[ ,",k,"]"))
+  abline(v=quantile(param$u[,k],0.025),col="blue")
+  abline(v=quantile(param$u[,k],0.975),col="blue")
+}
+```
+
+### Histogram of parameters $\beta$
+```{r}
+par(mfrow=c(1,3))
+hist(param$beta1, main="Histogram of beta1", xlab=TeX("$\\beta_1$"))
+abline(v=quantile(param$beta1,0.025),col="blue")
+abline(v=quantile(param$beta1,0.975),col="blue")
+hist(param$beta2, main="Histogram of beta2", xlab=TeX("$\\beta_2$"))
+abline(v=quantile(param$beta2,0.025),col="blue")
+abline(v=quantile(param$beta2,0.975),col="blue")
+hist(param$beta3, main="Histogram of beta3", xlab=TeX("$\\beta_3$"))
+abline(v=quantile(param$beta3,0.025),col="blue")
+abline(v=quantile(param$beta3,0.975),col="blue")
+```
+## (c) Conduct a posterior predictive check to see if the homoscedastic assumption is appropriate
+To check if the homoscedastic assumption is appropriate, I'll use a test statistic $T$ as following:
+$\sigma_{Ti}^2 := \sum_{j=1}^7 \left( y_{ij}-{\beta_1 + u_i \over {1+\exp\left\{-(\text(AGE)_{ij}-\beta_2)/\beta_3\right\}}}\right)^2$
+$\sigma_{Ti}^2$ measures the within-tree variance of the group $i$.
+
+$T := \sum_{i=1}^5 \sqrt{{1\over 5}\left(\sigma_{Ti}^2 - {1\over 5}\sum_{j=1}^5\sigma_{Tj}^2\right)^2} $
+This statistic can measure the difference of the within-tree variance.
+
+```{r}
+Y_mean = extract(fit, "Y_mean")
+
+Y_pred = extract(fit, "Y_pred")
+
+sigma.rep = matrix(rep(NA, (niter-nwarm)*4*5), ncol=5)
+sigma.obs = matrix(rep(NA, (niter-nwarm)*4*5), ncol=5)
+
+for(j in 1:5){
+  y_ind = seq((j-1)*7+1, (j-1)*7+1+6)   # group index for y
+  sigma.rep[, j] = apply((Y_pred$Y_pred[, y_ind] - Y_mean$Y_mean[, y_ind])^2, 1, mean)
+  sigma.obs[, j] = apply((Orange[(Orange$Tree==j),]$circumference - t(Y_mean$Y_mean[, y_ind]))^2, 2, mean)
+}
+
+T_rep = apply(sigma.rep, 1, sd)
+T_obs = apply(sigma.obs, 1, sd)
+```
+
+### posterior predictive check with graphical method
+```{r}
+par(mfrow=c(1,2))
+plot(T_obs, T_rep) 
+abline(a=0, b=1, col="red")
+
+hist(T_obs - T_rep)
+```
+### posterior predictive p-value
+```{r}
+print(mean(T_obs > T_rep))
+```
+
+
+
+## Refit the data using a more suitable modeling framework
+To relax the homoscedasticity assumption, we give different variance for each tree.
+i.e. $\epsilon_{ij} \sim \text{N}(0, \sigma_i^2)$ so that we have not equal within-tree variance.
+
+```{r}
+# Stan model
+stanmodel2 = "
+data {
+  int<lower=1> L;
+  int<lower=0> N;
+  int<lower=1, upper=L> ll[N];
+  vector[N] x;
+  vector[N] y;
+}
+parameters {
+  real<lower=0> beta1;
+  real beta2;
+  real<lower=0> beta3;
+  real u[L];
+  real<lower=0> tau;
+  real<lower=0> sigma2[L];
+}
+
+model {
+  // priors
+  for(l in 1:L){
+    sigma2[l] ~ inv_gamma(0.001, 0.001);
+  }
+  beta1 ~ normal(192, 1000);
+  beta2 ~ normal(728, 1000);
+  beta3 ~ normal(353, 1000);
+
+  // likelihood
+  for (l in 1:L){
+    u[l] ~ normal(0, tau);
+  }
+  for(n in 1:N){
+    y[n] ~ normal((beta1 + u[ll[n]]) / (1 + exp(-(x[n] - beta2)/beta3)), sqrt(sigma2[ll[n]]));
+  }
+}
+
+generated quantities{
+  real Y_mean[N];
+  real Y_pred[N];
+  for(n in 1:N){
+    Y_mean[n] = (beta1 + u[ll[n]]) / (1 + exp(-(x[n] - beta2)/beta3));
+    Y_pred[n] = normal_rng(Y_mean[n], sqrt(sigma2[ll[n]]));
+  }
+}
+"
+```
+
+```{r}
+
+niter = 100000
+nwarm = 50000
+fit2 = stan(
+  model_code = stanmodel2,
+  data = list(y=Orange$circumference, x=Orange$age, N=nrow(Orange), L=5, ll=as.numeric(Orange$Tree)),
+  chains = 4,
+  warmup = nwarm,
+  iter = niter,
+  cores=4,
+)
+
+param2 = extract(fit2)
+print(fit2)
+```
+
+### trace plot of beta
+```{r}
+traceplot(fit2, pars=c("beta1", "beta2", "beta3"))
+```
+### trace plot of u
+```{r}
+traceplot(fit2, pars=c("u[1]", "u[2]", "u[3]", "u[4]", "u[5]"))
+```
+### Fitting with posterior mean
+```{r}
+
+u_hat2 = c(mean(param2$u[,1]), mean(param2$u[,2]), mean(param2$u[,3]), mean(param2$u[,4]), mean(param2$u[,5]))
+beta_hat2 = c(mean(param2$beta1), mean(param2$beta2), mean(param2$beta3))
+y = matrix(rep(NA, 5*length(x)), ncol=5)
+
+my_col = viridis(n = 5) 
+par(mfrow=c(1,1))
+u_index = unique(as.integer(Orange$Tree))
+for(i in 1:5){
+  y[,i] = (beta_hat2[1] + u_hat2[u_index[i]])/(1 + exp(-(x - beta_hat2[2])/beta_hat2[3]))
+  plot(x, y[,i], type="l", ylim=c(min(Orange$circumference), max(Orange$circumference)), col=my_col[i])
+  points(x=Orange[Orange$Tree==i,]$age, y=Orange[Orange$Tree==i,]$circumference, col=my_col[i])
+  par(new=T)
+}
+```
+
+### Histogram of parameters u
+```{r}
+par(mfrow=c(2,3))
+for(k in 1:5){
+  hist(param2$u[,k], breaks=30, main=paste0("Histogram of u[ ,",k,"]"), xlab=paste0("u[ ,",k,"]"))
+  abline(v=quantile(param$u[,k],0.025),col="blue")
+  abline(v=quantile(param$u[,k],0.975),col="blue")
+}
+```
+### posterior predictive check
+```{r}
+Y_mean2 = extract(fit2, "Y_mean")
+Y_pred2 = extract(fit2, "Y_pred")
+
+sigma.rep2 = matrix(rep(NA, (2e+05)*5), ncol=5)
+sigma.obs2 = matrix(rep(NA, (2e+05)*5), ncol=5)
+
+for(j in 1:5){
+  y_ind = seq((j-1)*7+1, (j-1)*7+1+6)   # group index for y
+  sigma.rep2[, j] = apply((Y_pred2$Y_pred[, y_ind] - Y_mean2$Y_mean[, y_ind])^2, 1, mean)
+  sigma.obs2[, j] = apply((Orange[(Orange$Tree==j),]$circumference - t(Y_mean2$Y_mean[, y_ind]))^2, 2, mean)
+}
+
+T_rep2 = apply(sigma.rep2, 1, sd)
+T_obs2 = apply(sigma.obs2, 1, sd)
+```
+
+### posterior predictive check with graphical method
+```{r}
+par(mfrow=c(1,2))
+plot(T_obs2, T_rep2) 
+abline(a=0, b=1, col="red")
+
+hist(T_obs2 - T_rep2)
+```
+### posterior predictive p-value
+```{r}
+print(mean(T_obs2 > T_rep2))
+```
+
+
+
+# Q2. 
+
+```{r}
+n = 500
+i = 1:n
+xi = (2*i - 1)/1000
+```
+
+## (a) Approximate the target function and compare the column space of design matrix
+```{r}
+k = 3
+L = 11
+H = L + k + 1
+xh = seq(min(xi), max(xi), length.out = L + 2)[2:(L+1)]  # knots
+```
+
+### Generate design matrix 
+```{r}
+## Design matrix W1 and W2 of using truncated power basis and using polynomial radial basis, respectively.
+W1 = matrix(rep(0, n*H), ncol=H)  # Design matrix of using truncated power basis
+W2 = matrix(rep(NA, n*H), ncol=H) # Design matrix of using polynomial radial basis
+for(j in 1:L){
+  W1[, j] = (xi - xh[j])^3
+  W2[, j] = (abs(xi - xh[j]))^3
+}
+W1[W1<0] = 0
+
+for(j in (L+1):H){
+  W1[, j] = W2[, j]= xi^(j-L-1)
+}
+
+W3 = bs(xi, knots=xh, degree=3, intercept=T)  # Design matrix of using B-Spline basis
+```
+
+### Check whether the three design matrices span the same column space.
+```{r}
+all.equal(W1%*%solve(t(W1)%*%W1)%*%t(W1), W2%*%solve(t(W2)%*%W2)%*%t(W2))
+all.equal(W1%*%solve(t(W1)%*%W1)%*%t(W1), W3%*%solve(t(W3)%*%W3)%*%t(W3))
+all.equal(W2%*%solve(t(W2)%*%W2)%*%t(W2), W3%*%solve(t(W3)%*%W3)%*%t(W3))
+
+(W1%*%solve(t(W1)%*%W1)%*%t(W1))[1:5, 1:5]
+(W2%*%solve(t(W2)%*%W2)%*%t(W2))[1:5, 1:5]
+(W3%*%solve(t(W3)%*%W3)%*%t(W3))[1:5, 1:5]
+```
+
+### Generate $y_i$ 
+```{r}
+set.seed(512)
+y = sin(2*pi*xi^3)^3 + rnorm(n, 0, 0.1)
+plot(xi, y, cex=0.5)
+```
+
+### Approximate the target function with three basis
+```{r}
+fit1 = lm(y ~ W1)
+fit2 = lm(y ~ W2)
+fit3 = lm(y ~ W3)
+pred1 = predict(fit1)
+pred2 = predict(fit2)
+pred3 = predict(fit3)
+
+mfrow=c(1,3)
+plot(xi, y, cex=0.5)
+lines(xi, pred1, col="red", lwd=1.2)
+plot(xi, y, cex=0.5)
+lines(xi, pred2, col="red", lwd=1.2)
+plot(xi, y, cex=0.5)
+lines(xi, pred3, col="red", lwd=1.2)
+```
+
+##(b) 
+
+### Assign a prior for parameters.
+g-prior on the $\beta_H$ with $g=n$ i.e.$\beta_H | \sigma^2, H, y \sim \text{N}_H \left({g \over 1+g}(W_H^TW_H)^{-1}W_H^Ty,\, {g\sigma^2 \over 1+g}(W_H^TW_H)^{-1}\right)$
+$p(\sigma^2) \propto \sigma^{-2}$
+$L\sim \text{Pois}(1)$
+
+
+### Obtain the model averaged pointwise posteior for $\mu(x_0)$
+```{r}
+n = 500
+j = 1:999
+x0 = j/1000
+k = 3
+g = n
+
+L_temp = seq(1,40)       # Set the range of L
+
+# Compute the posterior probability of H
+prob.L=c()
+for(h in L_temp){
+    xh = seq(min(xi), max(xi), length.out = h+2)[2:(h+1)]  # knots
+    WH = bs(xi, knots=xh, degree=k, intercept=T)
+    prob.L[h] = dpois(h, 1, log=T) - n/2*log(0.5 * t(y) %*% (diag(rep(1, n)) - g/(1+g)*WH%*%solve(t(WH)%*%WH)%*%t(WH)) %*%y)
+}
+
+# Normalize the posterior probability using log-sum-exp trick
+log_prob_sum = max(prob.L) + log(sum(exp(prob.L - max(prob.L))))
+prob.L = exp(prob.L - log_prob_sum)
+```
+
+```{r}
+niter = 10000
+
+betaH_samp = matrix(rep(NA, niter*(max(L_temp)+k+1)), nrow=niter)
+mu_x = matrix(rep(NA, niter*length(x0)), nrow=niter)
+L_samp = c()
+news2 = c()
+for(t in 1:niter){
+  # Sample H and construct B-spline basis
+  newL = sample(L_temp, 1, prob=prob.L)
+  newH = newL + k + 1
+  xh = seq(min(xi), max(xi), length.out = newL+2)[2:(newL+1)]  # knots
+  newWH = bs(xi, knots=xh, degree=k, intercept=T)
+  
+  inv_WH = solve(t(newWH)%*%newWH)
+  
+  # Sample sigma2 from the posterior distribution given H
+  news2[t] = rinvgamma(1, n/2, 0.5 * t(y) %*% (diag(rep(1, n)) - (g/(1+g))*newWH%*%inv_WH%*%t(newWH)) %*%y)
+  
+  # Sample beta_H from the posterior distribution given H and sigma2
+  betaH = mvrnorm(1, g/(1+g)*inv_WH%*%t(newWH)%*%y, g/(1+g)*news2[t]*inv_WH)
+  
+  # mu
+  xh = seq(min(x0), max(x0), length.out = newL+2)[2:(newL+1)]
+  WH = bs(x0, knots=xh, degree=k, intercept=T)
+  for(i in 1:length(x0)){
+    mu_x[t, i] = sum(betaH*WH[i, ])
+  }
+  
+  # Store the parameters
+  for(h in 1:H){
+    betaH_samp[t, h] =  betaH[h]
+  }
+  L_samp[t] = newL
+  
+}
+```
+
+### Trace plot of L and sigma2
+```{r}
+plot(news2, type="l")
+plot(betaH_samp[,2], type="l")
+```
+
+```{r}
+par(mfrow=c(1,2))
+hist(L_samp, main="Histogram of Sample of L")
+hist(news2, main="Histogram of Sample of sigma2")
+
+table(L_samp)
+```
+
+
+### Posterior mean and credible interval
+```{r}
+post_mean_mux = apply(mu_x, 2, mean)
+post_LB_mux = apply(mu_x, 2, quantile, 0.025)
+post_UB_mux = apply(mu_x, 2, quantile, 0.975)
+```
+
+### Draw the posterior mean and the 95% credible interval for every $x_0$
+```{r}
+ggplot(mapping = aes(x=x0, y=post_mean_mux)) +
+  geom_line(mapping = aes(x=xi, y=sin(2*pi*xi^3)^3), color="red", size=1.0, alpha=0.8) +
+  geom_line(color="blue", size=1.0, linetype="dashed") +
+  geom_ribbon(aes(ymin=post_LB_mux, ymax=post_UB_mux), alpha=0.4) +
+  geom_point(mapping=aes(x=xi, y=y), alpha=0.3, size=0.2)+
+  ggtitle("Posterior mean and the 95% credible interval") 
+
+```
+
+
+
