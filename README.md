@@ -11,10 +11,9 @@
 
 
 <div align="center">
-
-$$y_j \sim \text{N}_{n}(X_j\beta_j,\ \sigma^2 I_{n}),$$
-
-$$\beta_j \sim \text{N}_{d} (\mu_\beta,\ \sigma_\beta)$$
+  
+$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2 I_n)$$
+$$\beta_j \sim \text{N}_{d}(\mu_\beta,\ \sigma_\beta)$$
 </div>
 
 where $\sigma^2>0$, $\mu_\beta \in \mathbb{R}^d$, and $\Sigma_\beta \in \mathbb{R}^{d\times d}$ (positive definite)
