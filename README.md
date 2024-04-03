@@ -10,13 +10,10 @@
 - $j=1, \ldots, m$ : subject index
 
 
-<div align="center">
 
 $$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2 I_{n_j}),$$
 
 $$\beta_j \sim \text{N}_d(\mu_\beta,\ \sigma_\beta)$$
-</div>
-
 
 where $\sigma^2>0$, $\mu_\beta \in \mathbb{R}^d$, and $\Sigma_\beta \in \mathbb{R}^{d\times d}$ (positive definite)
 
