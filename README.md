@@ -1,4 +1,4 @@
-# Specific Model Defines
+## Model Implementaion with Specific Example:
 
 <details>
 <summary>Hierarchical Linear Model</summary>
@@ -43,7 +43,7 @@ $$p(\tau)\propto 1$$
 
 
 <details>
-<summary>Nonparametric Regression Model(using spline) </summary>
+<summary>Basis Functional Model </summary>
 
 ### Model 
 $$y_i = \sin^3(2\pi x_i^3) + \epsilon_i,\\
@@ -92,23 +92,21 @@ derive image
 <summary>Finite Mixture Model </summary>
 
 ### Model 
-page 10
+Univariate location-scale mixture of Gaussians
+$$y_i\, |\, z_i \sim \text{N}(\mu_{z_i},\ \tau_{z_i}^2)\\
+\text{P}(z_i=h) = \pi_h, \quad i=1, \ldots, n$$
 
 ### Priors
+$$(\pi_1,\ldots, \pi_H)\sim \text{Dirichlet}(a,\ldots, a),\\
+\mu_h\,|\,\tau_h^2 \sim \text{N}(\mu_0,\ \kappa \tau_h^2),\\
+\tau_h^2 \sim \text{Inv-Gamma}(a_\tau,\ b_\tau),\quad h=1, \ldots, H$$
 
 </details>
 
 
+### My summary (details about the model)
+[Basis Functional Models](https://www.notion.so/CH20-Basis-Functional-Model-185b7c93b7cc41d8aceecd66caf906a4)
 
-
-1. [Hierarchical Linear Models](https://www.notion.so/CH15-Hierarchical-Linear-Models-b34181ff98dd4ba085515bdcb1e80b4e)
-
-2. [Generalized Linear Models](https://www.notion.so/CH16-Generalized-Linear-Models-d6f828054d614701acc0ba9aafbedf17)
-
-3. [Basis Functional Models](https://www.notion.so/CH20-Basis-Functional-Model-185b7c93b7cc41d8aceecd66caf906a4)
-
-4. [Gaussian Process Regression](https://www.notion.so/CH21-Gaussian-Process-Models-bd6f9e86ec9d4060960e138ff57fda0d)
-
-5. [Finite Mixture Model](https://www.notion.so/CH22-Finite-Mixture-Models-e54a9682d707492f80a005d8a3084510)
+[Gaussian Process Regression](https://www.notion.so/CH21-Gaussian-Process-Models-bd6f9e86ec9d4060960e138ff57fda0d)
 
 
