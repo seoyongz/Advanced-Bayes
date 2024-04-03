@@ -10,7 +10,8 @@
 - $j=1, \ldots, m$ : subject index
 
 <div align="center">
-$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2I_{n_j})\\
+$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2I_{n_j})
+
 \beta_j \sim \text{N}_d(\mu_\beta,\ \sigma_\beta)$$
 </div>
 
@@ -19,8 +20,10 @@ where $\sigma^2>0$, $\mu_\beta \in \mathbb{R}^d$, and $\Sigma_\beta \in \mathbb{
 ### Priors
 
 <div align="center">
-$$\mu_\beta \sim \text{N}_d(\xi,\ \Omega),\\
-\sigma^2 \sim \text{Inv-}\chi^2(\nu,\ \tau^2),\\
+$$\mu_\beta \sim \text{N}_d(\xi,\ \Omega),
+
+\sigma^2 \sim \text{Inv-}\chi^2(\nu,\ \tau^2),
+
 \Sigma_\beta \sim \text{Inv-Wishart}_\rho(\Psi^{-1})$$
 </div>
 
@@ -34,8 +37,10 @@ $$\mu_\beta \sim \text{N}_d(\xi,\ \Omega),\\
 ### Model 
 
 <div align="center">
-$$y_{ij} = \frac{\beta_1 + u_i}{1+\exp\left\{-(\text{AGE}_{ij} - \beta_2)/\beta_3 \right\}}\\
-u_i \sim \text{N}(0,\ \tau^2),\\
+$$y_{ij} = \frac{\beta_1 + u_i}{1+\exp\left\{-(\text{AGE}_{ij} - \beta_2)/\beta_3 \right\}}
+
+u_i \sim \text{N}(0,\ \tau^2),
+
 \epsilon_{ij} \sim \text{N}(0,\ \sigma^2)$$
 </div>
 
@@ -78,7 +83,8 @@ Let $x_i = (2i-1)/1000,\ i=1, \ldots, n$ with $n=500$
 
 ### Model 
 <div align="center">
-$$y_i = \mu(x_i) + \epsilon_i,\\
+$$y_i = \mu(x_i) + \epsilon_i,
+
 \epsilon_i \sim \text{N}(0,\ \sigma^2)$$
 </div>
 
@@ -86,16 +92,13 @@ where $x_i \in \mathbb{R}^p$
 
 ### Priors
 <div align="center">
-$$\mu \sim \text{GP}(0,\ k),\\
-k(x,\ x') = \tau^2 \exp\left(-\frac{(x-x')^2}{l^2} \right),\\
+$$\mu \sim \text{GP}(0,\ k),
+
+k(x,\ x') = \tau^2 \exp\left(-\frac{(x-x')^2}{l^2} \right),
+
 \log(\sigma^2) \propto 1$$
 </div>
 
-### Posteior distribution
-<div align="center">
-$$\begin{pmatrix} y \\ \bar{\mu} \\ \tilde{\mu} \end{pmatrix} |\ \sigma^2\sim \text{N}_{2n+m}\left(0,\ \begin{pmatrix} K(x,x)+\sigma^2I_n & K(x,x) & K(x, \tilde{x}) \\ K(x,x) & K(x,x) & K(x, \tilde{x}) \\ K(x, \tilde{x}) & K(x, \tilde{x}) & K(\tilde{x}, \tilde{x}) \end{pmatrix}\right)
-$$
-</div>
 
 </details>
 
@@ -108,14 +111,17 @@ $$
 Univariate location-scale mixture of Gaussians
 
 <div align="center">
-$$y_i\, |\, z_i \sim \text{N}(\mu_{z_i},\ \tau_{z_i}^2)\\
+$$y_i\, |\, z_i \sim \text{N}(\mu_{z_i},\ \tau_{z_i}^2)
+
 \text{P}(z_i=h) = \pi_h, \quad i=1, \ldots, n$$
 </div>
 
 ### Priors
 <div align="center">
-$$(\pi_1,\ldots, \pi_H)\sim \text{Dirichlet}(a,\ldots, a),\\
-\mu_h\,|\,\tau_h^2 \sim \text{N}(\mu_0,\ \kappa \tau_h^2),\\
+$$(\pi_1,\ldots, \pi_H)\sim \text{Dirichlet}(a,\ldots, a),
+
+\mu_h\,|\,\tau_h^2 \sim \text{N}(\mu_0,\ \kappa \tau_h^2),
+
 \tau_h^2 \sim \text{Inv-Gamma}(a_\tau,\ b_\tau),\quad h=1, \ldots, H$$
 </div>
 </details>
