@@ -12,7 +12,7 @@
 
 <div align="center">
 
-$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2I_{n_j}),$$
+$$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2 I_{n_j}),$$
 
 $$\beta_j \sim \text{N}_d(\mu_\beta,\ \sigma_\beta)$$
 </div>
