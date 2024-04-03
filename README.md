@@ -4,11 +4,6 @@
 <summary>Hierarchical Linear Model</summary>
 
 ### Model
-- $y_j \sim \mathbb{R}^{n_j}$ : observation vector
-- $X_j \sim \mathbb{R}^{n_j \times d}$ : design matrix 
-- $\beta_j\in \mathbb{R}^d$ : subject-specific random effects
-- $j=1, \ldots, m$ : subject index
-
 
 
 $y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2 I_{n_j}),$
@@ -39,11 +34,11 @@ $$\Sigma_\beta \sim \text{Inv-Wishart}_\rho(\Psi^{-1})$$
 
 <div align="center">
 
-$y_{ij} = \frac{\beta_1 + u_i}{ 1+\exp [-(\text{AGE}_{ij} - \beta_2)/\beta_3 ] },$
+$$y_{ij} = \frac{\beta_1 + u_i}{ 1+\exp [-(\text{AGE}_{ij} - \beta_2)/\beta_3 ] },$$
 
-$u_i \sim \text{N}(0,\ \tau^2),$
+$$u_i \sim \text{N}(0,\ \tau^2),$$
 
-$\epsilon_{ij} \sim \text{N}(0,\ \sigma^2)$
+$$\epsilon_{ij} \sim \text{N}(0,\ \sigma^2)$$
 </div>
 
 ### Priors
