@@ -60,8 +60,10 @@ $$p(\tau)\propto 1$$
 ### Model 
 
 <div align="center">
-$$y_i = \sin^3(2\pi x_i^3) + \epsilon_i,\\
-\epsilon_i \sim \text{N}(0,\ 0.1^2)$$
+
+$$y_i = \sin^3(2\pi x_i^3) + \epsilon_i$$
+
+$$\epsilon_i \sim \text{N}(0,\ 0.1^2)$$
 </div>
 
 Let $x_i = (2i-1)/1000,\ i=1, \ldots, n$ with $n=500$
