@@ -1,4 +1,4 @@
-# Review of Advanced Bayes Class
+# Specific Model Defines
 
 <details>
 <summary>Hierarchical Linear Model</summary>
@@ -22,49 +22,9 @@ $$\mu_\beta \sim \text{N}_d(\xi,\ \Omega),\\
 \Sigma_\beta \sim \text{Inv-Wishart}_\rho(\Psi^{-1})$$
 
 
-- $p(\beta\ |\ \sigma^2,\ \mu_\beta,\ \Sigma_\beta,\ y)$
-
-
-- $p(\sigma^2\ |\ \beta,\ \mu_\beta,\ \Sigma_\beta,\ y)$
-
-
-- $p(\mu_\beta\ |\ \beta,\ \sigma^2,\ \Sigma_\beta,\ y)$
-
-
-- $p(\Sigma_\beta\ |\ \beta,\ \sigma^2,\ \mu_\beta,\ y)$
-
-
-
-### Full conditional posterior distribution
 
 </details>
 
-
-
-<details>
-<summary>Generalized Linear Model </summary>
-
-### Model 
-
-
-### Priors
-
-
-
-### Sampling scheme
-
-
-
-#### Independent MH algorithm
-
-
-#### Random walk Metropolis algorithm
-
-
-#### Data augmentation
-
-
-</details>
 
 <details>
 <summary>Nonlinear Mixed Model </summary>
@@ -75,7 +35,7 @@ u_i \sim \text{N}(0,\ \tau^2),\\
 \epsilon_{ij} \sim \text{N}(0,\ \sigma^2)$$
 
 ### Priors
-use
+$$p(\tau)\propto 1$$
 
 
 
@@ -83,14 +43,21 @@ use
 
 
 <details>
-<summary>Nonparametric Regression Model </summary>
+<summary>Nonparametric Regression Model(using spline) </summary>
 
 ### Model 
 $$y_i = \sin^3(2\pi x_i^3) + \epsilon_i,\\
 \epsilon_i \sim \text{N}(0,\ 0.1^2)$$
 Let $x_i = (2i-1)/1000,\ i=1, \ldots, n$ with $n=500$
 
-### Priors
+(a) Use **truncated power basis** with fixed $L=11$ interior uniform knots
+
+(b) Use **polynomial radial basis** with fixed $L=11$ interior uniform knots
+
+(c) Use **B-Spline basis** with fixed $L=11$ interior uniform knots
+
+(d) Use **B-Spline basis** with $L\sim \text{Pois}(1)$, put the $g$-prior on the coefficents $\beta_H$ with $g=n, 
+
 
 
 </details>
