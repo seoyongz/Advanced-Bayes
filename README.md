@@ -4,11 +4,18 @@
 <summary>Hierarchical Linear Model</summary>
 
 ### Model
+- $y_j \sim \mathbb{R}^{n_j}$ : observation vector
+- $X_j \sim \mathbb{R}^{n_j \times d}$ : design matrix 
+- $\beta_j\in \mathbb{R}^d$ : subject-specific random effects
+- $j=1, \ldots, m$ : subject index
 
 
-$y_j \sim \text{N}_{n_j}(X_j\beta_j,\ \sigma^2 I_{n_j}),$
+<div align="center">
 
-$\beta_j \sim \text{N}_{d} (\mu_\beta,\ \sigma_\beta)$
+$$y_j \sim \text{N}_{n}(X_j\beta_j,\ \sigma^2 I_{n}),$$
+
+$$\beta_j \sim \text{N}_{d} (\mu_\beta,\ \sigma_\beta)$$
+</div>
 
 where $\sigma^2>0$, $\mu_\beta \in \mathbb{R}^d$, and $\Sigma_\beta \in \mathbb{R}^{d\times d}$ (positive definite)
 
