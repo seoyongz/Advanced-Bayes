@@ -42,7 +42,7 @@ $$\Sigma_\beta \sim \text{Inv-Wishart}_\rho(\Psi^{-1})$$
 
 <div align="center">
 
-$$y_{ij} = \frac{\beta_1 + u_i}{1+\exp\left\{-(\text{AGE}_{ij} - \beta_2)/\beta_3 \right\}},$$
+$$y_{ij} = \frac{\beta_1 + u_i}{ 1+\exp \left\{ -(\text{AGE}_{ij} - \beta_2)/\beta_3 \right\} },$$
 
 $$u_i \sim \text{N}(0,\ \tau^2),$$
 
