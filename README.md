@@ -75,7 +75,7 @@ Let $x_i = (2i-1)/1000,\ i=1, \ldots, n$ with $n=500$
 
 (c) Use **B-Spline basis** with fixed $L=11$ interior uniform knots
 
-(d) Use **B-Spline basis** with $L\sim \text{Pois}(1)$, put the $g$-prior on the coefficents $\beta_H$ with $g=n, 
+(d) Use **B-Spline basis** with $L\sim \text{Pois}(1)$, put the $g$-prior on the coefficents $\beta_H$ with $g=n$, 
 
 
 

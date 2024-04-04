@@ -10,8 +10,7 @@ head(Orange)
 summary(Orange)
 
 #########################################################
-######################## Q1 #############################
-#########################################################
+## Fit the oragne data with the nonlinear mixed model 
 
 ## (a) Overlay line plots for the trees to see how they grow over time.
 ggplot(mapping=aes(x=age, y=circumference, group=Tree), data=Orange) + 
@@ -205,9 +204,6 @@ for(i in 1:5){
 }
 
 
-## (c) Conduct a posterior predictive check 
-
-##
 
 
 
@@ -267,83 +263,3 @@ fit2 = stan(
   cores=4,
 )
 print(fit2)
-
-#########################################################
-######################## Q2 #############################
-#########################################################
-n = 500
-i = 1:n
-xi = (2*i - 1)/1000
-set.seed(512)
-eps = rnorm(n, 0, 0.1)
-yi = (sin(2*pi*xi^3))^3 + eps
-
-plot(xi, yi, type="l")
-
-k = 3
-
-## (a) Approximate the target function and compare the column space of design matrix
-L = 11
-H = L + k + 1
-xh = seq(min(xi), max(xi), length.out = H)
-
-## Generate design matrix using the truncated power basis
-W1 = matrix(rep(NA, n*H), ncol=H)
-for(j in 1:L){
-  W1[, j] = (max(0, (xi - xh[j])))^3
-}
-for(j in (L+1):H){
-  W1[, j] = xi^(j-L-1)
-}
-
-
-## Generate design matrix using the polynomial radial basis
-W2 = matrix(rep(NA, n*H), ncol=H)
-for(j in 1:L){
-  W2[, j] = (abs(xi - xh[j]))^3
-}
-for(j in (L+1):H){
-  W2[, j] = xi^(j-L-1)
-}
-
-
-## Generate design matrix using the B-spline basis
-b0 = matrix(rep(0, n*m), nrow=n)
-for(j in 1:(L+k+1)){
-  for(k in 1:n){
-    if(xi[i]>=xh[j] & xi[i]<xh[j]){
-      b0[i, j] = 1
-    }
-  }
-}
-
-w = function(xi, xh, h, k){
-  if(xh[h+k] != xh[h]){
-    return((xi-xh[h])/(xh[h+k]-xh[h]))
-  }
-  else{
-    return(0)
-  }
-}
-
-for(j in 1:(L+k+1)){
-  
-}
-W3[, 1] = 
-for(j in 1:(L+k+1)){
-  W3[,j] = (xi - xh[j])/(x[j+k]-x[j])*
-}
-
-
-W3 = attr(bs(xi, knots=L+2*k+2, degree=3, intercept=T), "matrix")
-
-## Check whether the three design matrices sapn the same column space
-sum(W1%*%ginv(t(W1)%*%W1)%*%t(W1) == W2%*%ginv(t(W2)%*%W2)%*%t(W2))
-sum(W1%*%ginv(t(W1)%*%W1)%*%t(W1) == W3%*%ginv(t(W3)%*%W3)%*%t(W3))
-
-(W1%*%ginv(t(W1)%*%W1)%*%t(W1))[1:5,1:5]
-(W2%*%ginv(t(W2)%*%W2)%*%t(W2))[1:5,1:5]
-
-(W1%*%ginv(t(W1)%*%W1)%*%t(W1))[1:5,1:5]
-(W2%*%ginv(t(W2)%*%W2)%*%t(W2))[1:5,1:5]
-

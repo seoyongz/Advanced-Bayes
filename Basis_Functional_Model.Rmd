@@ -1,0 +1,183 @@
+
+##### Basis functional model
+
+
+## Use 3 different basis 
+# W1 : truncated power basis
+# W2 : polynomial radial basis
+# W3 : B-Spline basis
+```{r}
+n = 500
+i = 1:n
+xi = (2*i - 1)/1000
+```
+
+## Approximate the target function and compare the column space of design matrix
+```{r}
+k = 3
+L = 11
+H = L + k + 1
+xh = seq(min(xi), max(xi), length.out = L + 2)[2:(L+1)]  # knots
+```
+
+### Generate design matrix 
+```{r}
+## Design matrix W1 and W2 of using truncated power basis and using polynomial radial basis, respectively.
+W1 = matrix(rep(0, n*H), ncol=H)  # Design matrix of using truncated power basis
+W2 = matrix(rep(NA, n*H), ncol=H) # Design matrix of using polynomial radial basis
+for(j in 1:L){
+  W1[, j] = (xi - xh[j])^3
+  W2[, j] = (abs(xi - xh[j]))^3
+}
+W1[W1<0] = 0
+
+for(j in (L+1):H){
+  W1[, j] = W2[, j]= xi^(j-L-1)
+}
+
+W3 = bs(xi, knots=xh, degree=3, intercept=T)  # Design matrix of using B-Spline basis
+```
+
+### Check whether the three design matrices span the same column space.
+```{r}
+all.equal(W1%*%solve(t(W1)%*%W1)%*%t(W1), W2%*%solve(t(W2)%*%W2)%*%t(W2))
+all.equal(W1%*%solve(t(W1)%*%W1)%*%t(W1), W3%*%solve(t(W3)%*%W3)%*%t(W3))
+all.equal(W2%*%solve(t(W2)%*%W2)%*%t(W2), W3%*%solve(t(W3)%*%W3)%*%t(W3))
+
+(W1%*%solve(t(W1)%*%W1)%*%t(W1))[1:5, 1:5]
+(W2%*%solve(t(W2)%*%W2)%*%t(W2))[1:5, 1:5]
+(W3%*%solve(t(W3)%*%W3)%*%t(W3))[1:5, 1:5]
+```
+
+### Generate $y_i$ 
+```{r}
+set.seed(512)
+y = sin(2*pi*xi^3)^3 + rnorm(n, 0, 0.1)
+plot(xi, y, cex=0.5)
+```
+
+### Approximate the target function with three basis
+```{r}
+fit1 = lm(y ~ W1)
+fit2 = lm(y ~ W2)
+fit3 = lm(y ~ W3)
+pred1 = predict(fit1)
+pred2 = predict(fit2)
+pred3 = predict(fit3)
+
+mfrow=c(1,3)
+plot(xi, y, cex=0.5)
+lines(xi, pred1, col="red", lwd=1.2)
+plot(xi, y, cex=0.5)
+lines(xi, pred2, col="red", lwd=1.2)
+plot(xi, y, cex=0.5)
+lines(xi, pred3, col="red", lwd=1.2)
+```
+
+
+
+
+## Use g-prior and L~Poison(1)
+
+### Assign a prior for parameters.
+g-prior on the $\beta_H$ with $g=n$ i.e.$\beta_H | \sigma^2, H, y \sim \text{N}_H \left({g \over 1+g}(W_H^TW_H)^{-1}W_H^Ty,\, {g\sigma^2 \over 1+g}(W_H^TW_H)^{-1}\right)$
+$p(\sigma^2) \propto \sigma^{-2}$
+$L\sim \text{Pois}(1)$
+
+
+### Obtain the model averaged pointwise posteior for $\mu(x_0)$
+```{r}
+n = 500
+j = 1:999
+x0 = j/1000
+k = 3
+g = n
+
+L_temp = seq(1,40)       # Set the range of L
+
+# Compute the posterior probability of H
+prob.L=c()
+for(h in L_temp){
+    xh = seq(min(xi), max(xi), length.out = h+2)[2:(h+1)]  # knots
+    WH = bs(xi, knots=xh, degree=k, intercept=T)
+    prob.L[h] = dpois(h, 1, log=T) - n/2*log(0.5 * t(y) %*% (diag(rep(1, n)) - g/(1+g)*WH%*%solve(t(WH)%*%WH)%*%t(WH)) %*%y)
+}
+
+# Normalize the posterior probability using log-sum-exp trick
+log_prob_sum = max(prob.L) + log(sum(exp(prob.L - max(prob.L))))
+prob.L = exp(prob.L - log_prob_sum)
+```
+
+```{r}
+niter = 10000
+
+betaH_samp = matrix(rep(NA, niter*(max(L_temp)+k+1)), nrow=niter)
+mu_x = matrix(rep(NA, niter*length(x0)), nrow=niter)
+L_samp = c()
+news2 = c()
+for(t in 1:niter){
+  # Sample H and construct B-spline basis
+  newL = sample(L_temp, 1, prob=prob.L)
+  newH = newL + k + 1
+  xh = seq(min(xi), max(xi), length.out = newL+2)[2:(newL+1)]  # knots
+  newWH = bs(xi, knots=xh, degree=k, intercept=T)
+  
+  inv_WH = solve(t(newWH)%*%newWH)
+  
+  # Sample sigma2 from the posterior distribution given H
+  news2[t] = rinvgamma(1, n/2, 0.5 * t(y) %*% (diag(rep(1, n)) - (g/(1+g))*newWH%*%inv_WH%*%t(newWH)) %*%y)
+  
+  # Sample beta_H from the posterior distribution given H and sigma2
+  betaH = mvrnorm(1, g/(1+g)*inv_WH%*%t(newWH)%*%y, g/(1+g)*news2[t]*inv_WH)
+  
+  # mu
+  xh = seq(min(x0), max(x0), length.out = newL+2)[2:(newL+1)]
+  WH = bs(x0, knots=xh, degree=k, intercept=T)
+  for(i in 1:length(x0)){
+    mu_x[t, i] = sum(betaH*WH[i, ])
+  }
+  
+  # Store the parameters
+  for(h in 1:H){
+    betaH_samp[t, h] =  betaH[h]
+  }
+  L_samp[t] = newL
+  
+}
+```
+
+### Trace plot of L and sigma2
+```{r}
+plot(news2, type="l")
+plot(betaH_samp[,2], type="l")
+```
+
+```{r}
+par(mfrow=c(1,2))
+hist(L_samp, main="Histogram of Sample of L")
+hist(news2, main="Histogram of Sample of sigma2")
+
+table(L_samp)
+```
+
+
+### Posterior mean and credible interval
+```{r}
+post_mean_mux = apply(mu_x, 2, mean)
+post_LB_mux = apply(mu_x, 2, quantile, 0.025)
+post_UB_mux = apply(mu_x, 2, quantile, 0.975)
+```
+
+### Draw the posterior mean and the 95% credible interval for every $x_0$
+```{r}
+ggplot(mapping = aes(x=x0, y=post_mean_mux)) +
+  geom_line(mapping = aes(x=xi, y=sin(2*pi*xi^3)^3), color="red", size=1.0, alpha=0.8) +
+  geom_line(color="blue", size=1.0, linetype="dashed") +
+  geom_ribbon(aes(ymin=post_LB_mux, ymax=post_UB_mux), alpha=0.4) +
+  geom_point(mapping=aes(x=xi, y=y), alpha=0.3, size=0.2)+
+  ggtitle("Posterior mean and the 95% credible interval") 
+
+```
+
+
+
